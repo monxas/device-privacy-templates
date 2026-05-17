@@ -1,0 +1,62 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  templates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pyyaml
+      - name: Validate all template YAMLs against schema
+        run: |
+          python <<'PY'
+          import sys, yaml
+          from pathlib import Path
+
+          REQUIRED_TOP = {"name", "description", "default_tier", "last_observed",
+                          "tested_firmware", "tested_hardware", "domains"}
+          REQUIRED_ENTRY = {"category", "why_block", "breaks_if_blocked"}
+          VALID_CATEGORIES = {"ads", "telemetry", "analytics", "account",
+                              "backbone", "update", "crash", "voice"}
+
+          fail = 0
+          for tpl_path in sorted(Path("templates").glob("*.yaml")):
+              tpl = yaml.safe_load(tpl_path.read_text())
+              missing = REQUIRED_TOP - tpl.keys()
+              if missing:
+                  print(f"{tpl_path.name}: missing top-level fields: {missing}")
+                  fail += 1
+              if tpl.get("name") != tpl_path.stem:
+                  print(f"{tpl_path.name}: 'name:' {tpl.get('name')!r} != filename")
+                  fail += 1
+              for i, e in enumerate(tpl.get("domains") or []):
+                  if "domain" not in e and "regex" not in e:
+                      print(f"{tpl_path.name}#{i}: must have 'domain:' or 'regex:'")
+                      fail += 1
+                  if "domain" in e and "regex" in e:
+                      print(f"{tpl_path.name}#{i}: cannot have both 'domain:' and 'regex:'")
+                      fail += 1
+                  missing_e = REQUIRED_ENTRY - e.keys()
+                  if missing_e:
+                      print(f"{tpl_path.name}#{i} ({e.get('domain') or e.get('regex')}): missing {missing_e}")
+                      fail += 1
+                  if e.get("category") and e["category"] not in VALID_CATEGORIES:
+                      print(f"{tpl_path.name}#{i}: category {e['category']!r} not in {VALID_CATEGORIES}")
+                      fail += 1
+                  if "tier" in e and e["tier"] not in (1, 2, 3):
+                      print(f"{tpl_path.name}#{i}: tier must be 1, 2, or 3 (got {e['tier']!r})")
+                      fail += 1
+          if fail:
+              print(f"\n{fail} validation error(s).")
+              sys.exit(1)
+          print(f"OK — all {len(list(Path('templates').glob('*.yaml')))} templates valid.")
+          PY
+      - name: Smoke-test the apply script (--help only)
+        run: ./scripts/apply-to-pihole.py --help
