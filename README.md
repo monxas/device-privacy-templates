@@ -1,18 +1,18 @@
 <div align="center">
 
-# device-privacy-templates
+# device-privacy-templates  *(archived)*
 
 **Per-device blocklists for Pi-hole — with notes on what each domain does and what breaks if you block it.**
 
-Tested against real firmware on real dates. Apply with one Python script.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Templates](https://img.shields.io/badge/templates-5-brightgreen)](templates/)
-[![Last observed](https://img.shields.io/badge/last%20observed-2026--05--17-blue)](#freshness)
-
-[**Quick start**](#quick-start) · [**Schema**](docs/SCHEMA.md) · [**Templates**](templates/) · [**Contribute a template**](CONTRIBUTING.md)
-
 </div>
+
+> ## 📦 Archived
+>
+> This repo is **archived**. The author measured empirically that a well-configured Pi-hole with mainstream gravity adlists (Steven Black, AdGuard DNS, EasyPrivacy, firstparty-trackers, …) **already blocks ~64% of what these templates would push** — and most of the residual is Tier 2/3 manufacturer-specific endpoints (LG ThinQ, Samsung TV Plus, Apple location/MDM) that break features many users still want.
+>
+> The genuinely novel piece was the **YAML schema** (`breaks_if_blocked:` + `why_block:` + `tier:` per domain) — a way to document _why_ to block something, not just _what_. Left in place as schema reference; PRs no longer reviewed.
+>
+> Companion (also archived) repo with the richer L3 gateway / Zeek inspection / web UI: [`nosey-privacy-monitor`](https://github.com/monxas/nosey-privacy-monitor).
 
 ---
 
